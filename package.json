@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "mongodb": "^6.18.0",
@@ -15,6 +16,7 @@
     "react-dom": "19.1.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.54.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
