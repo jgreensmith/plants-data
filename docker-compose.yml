@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  plant-images:
+    image: nginx:alpine
+    container_name: plant-images
+    ports:
+      - "8080:80"
+    volumes:
+      - ./public/uploads:/usr/share/nginx/html/uploads:rw
+    restart: unless-stopped
+    environment:
+      - NGINX_PORT=80
+    # Optionally, you can add a custom nginx.conf for more control
+    # volumes:
+    #   - ./nginx.conf:/etc/nginx/nginx.conf:ro

@@ -4,5 +4,5 @@ export type Plant = {
   description: string;
   watering: string;
   light: string;
-  imageUrl?: string;
+  imageUrl: string;
 };

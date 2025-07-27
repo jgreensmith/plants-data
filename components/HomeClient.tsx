@@ -1,11 +1,25 @@
 "use client";
 import { useState } from 'react';
+// SVG icons
+const TrashIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+  </svg>
+);
+const PencilIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 3.487a2.25 2.25 0 113.182 3.182L7.5 19.213l-4 1 1-4 12.362-12.726z" />
+  </svg>
+);
 import Image from 'next/image';
 import PlantCard from './PlantCard';
 import type { Plant } from '../types/plant';
 
 export default function HomeClient({ plants }: { plants: Plant[] }) {
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
+  const [editMode, setEditMode] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [form, setForm] = useState({ name: '', description: '', watering: '', light: '' });
   const [loading, setLoading] = useState(false);
@@ -173,21 +187,105 @@ export default function HomeClient({ plants }: { plants: Plant[] }) {
             <p className="mb-1"><span className="font-semibold">Description:</span> {selectedPlant.description}</p>
             <p className="mb-1"><span className="font-semibold">Watering:</span> {selectedPlant.watering}</p>
             <p><span className="font-semibold">Light:</span> {selectedPlant.light}</p>
-            <button
-              className="mt-6 w-full px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
-              onClick={async () => {
-                if (!selectedPlant) return;
-                const res = await fetch(`/api/delete-plant?id=${selectedPlant._id}`, { method: 'DELETE' });
-                if (res.ok) {
-                  setPlantsList(prev => prev.filter(p => p._id !== selectedPlant._id));
-                  setSelectedPlant(null);
-                } else {
-                  alert('Failed to delete plant');
-                }
-              }}
-            >
-              Remove Plant
-            </button>
+            <div className="flex gap-2 mt-6">
+              <button
+                className="flex-1 flex items-center justify-center border border-red-600 text-red-600 rounded px-4 py-2 hover:bg-red-50 transition"
+                style={{ background: 'none' }}
+                onClick={async () => {
+                  if (!selectedPlant) return;
+                  const res = await fetch(`/api/delete-plant?id=${selectedPlant._id}`, { method: 'DELETE' });
+                  if (res.ok) {
+                    setPlantsList(prev => prev.filter(p => p._id !== selectedPlant._id));
+                    setSelectedPlant(null);
+                  } else {
+                    alert('Failed to delete plant');
+                  }
+                }}
+                aria-label="Remove Plant"
+              >
+                <TrashIcon />
+              </button>
+              <button
+                className="flex-1 flex items-center justify-center border border-purple-600 text-purple-600 rounded px-4 py-2 hover:bg-purple-50 transition"
+                style={{ background: 'none' }}
+                onClick={() => setEditMode(true)}
+                aria-label="Edit Plant"
+              >
+                <PencilIcon />
+              </button>
+            </div>
+            {editMode && (
+              <form
+                className="flex flex-col gap-3 mt-4"
+                onSubmit={async e => {
+                  e.preventDefault();
+                  if (!selectedPlant) return;
+                  setEditLoading(true);
+                  setEditError(null);
+                  const formData = new FormData(e.currentTarget as HTMLFormElement);
+                  const updated = {
+                    id: selectedPlant._id,
+                    name: String(formData.get('editName')),
+                    description: String(formData.get('editDescription')),
+                    watering: String(formData.get('editWatering')),
+                    light: String(formData.get('editLight')),
+                  };
+                  const res = await fetch('/api/edit-plant', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updated),
+                  });
+                  if (res.ok) {
+                    setPlantsList(prev => prev.map(p => p._id === selectedPlant._id ? { ...p, ...updated, _id: selectedPlant._id } : p));
+                    setSelectedPlant({ ...selectedPlant, ...updated, _id: selectedPlant._id });
+                    setEditMode(false);
+                  } else {
+                    setEditError('Failed to update plant');
+                  }
+                  setEditLoading(false);
+                }}
+              >
+                <input
+                  name="editName"
+                  defaultValue={selectedPlant.name}
+                  className="border rounded px-3 py-2"
+                  required
+                />
+                <textarea
+                  name="editDescription"
+                  defaultValue={selectedPlant.description}
+                  className="border rounded px-3 py-2"
+                  required
+                />
+                <input
+                  name="editWatering"
+                  defaultValue={selectedPlant.watering}
+                  className="border rounded px-3 py-2"
+                  required
+                />
+                <input
+                  name="editLight"
+                  defaultValue={selectedPlant.light}
+                  className="border rounded px-3 py-2"
+                  required
+                />
+                {editError && <div className="text-red-600 text-sm">{editError}</div>}
+                <button
+                  type="submit"
+                  className="mt-2 px-4 py-2 bg-purple-700 text-white rounded hover:bg-purple-800 transition disabled:opacity-50"
+                  disabled={editLoading}
+                >
+                  {editLoading ? 'Saving...' : 'Save'}
+                </button>
+                <button
+                  type="button"
+                  className="mt-2 px-4 py-2 border border-gray-400 text-gray-700 rounded hover:bg-gray-100 transition"
+                  onClick={() => setEditMode(false)}
+                >
+                  Cancel
+                </button>
+              </form>
+            )}
           </div>
         </div>
       )}
