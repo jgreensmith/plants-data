@@ -19,7 +19,7 @@ const PlantCard: React.FC<PlantCardProps> = ({ plant, onClick }) => {
         height={120}
         className="object-cover rounded-md mx-auto"
       /> */}
-      <h2 className="mt-2 text-lg font-medium">{plant.name}</h2>
+      <h2 className="mt-2 text-lg font-medium text-green-900 drop-shadow-sm">{plant.name}</h2>
     </div>
   );
 };
